@@ -524,7 +524,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5954081632582129279, guid: 8fb1674b7a9bf2845bf9ae29c73af61f, type: 3}
       propertyPath: m_Name
-      value: Player
+      value: Spirit
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
