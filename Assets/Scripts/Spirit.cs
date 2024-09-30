@@ -45,7 +45,6 @@ public class Spirit : MonoBehaviour
     private void LateUpdate()
     {
         var screenPosition = Camera.main.WorldToScreenPoint(transform.position + offset);
-        Debug.Log(screenPosition);
         hpBar.transform.position = screenPosition;
     }
 
