@@ -11,7 +11,7 @@ public class Bullet : MonoBehaviour
 
     void Update()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
+        transform.Translate(speed * Time.deltaTime * direction);
     }
 
     public void DestroyBullet()
@@ -21,7 +21,7 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.transform.tag == "DestroyArea")
+        if (collision.CompareTag("DestroyArea"))
         {
             DestroyBullet();
         }

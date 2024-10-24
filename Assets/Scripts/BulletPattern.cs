@@ -56,11 +56,8 @@ public class StraightBullet : BulletPattern
     private void SetStartPosition()
     {
         var extents = bulletBounds.extents;
-        float startX = Random.Range(0, extents.x) * GetRandomSign();
-        float startY = Random.Range(0, extents.y) * GetRandomSign();
-
-        startPosition.x = startX;
-        startPosition.y = startY;
+        startPosition.x = Random.Range(0, extents.x) * GetRandomSign();
+        startPosition.y = Random.Range(0, extents.y) * GetRandomSign();
     }
 
     private void SetDirection()

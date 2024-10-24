@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
@@ -18,6 +17,7 @@ public class BulletPool : MonoBehaviour
         {
             var bullet = normalBulletPool.Dequeue();
             bullet.gameObject.SetActive(true);
+
             return bullet;
         }
         else
@@ -28,6 +28,7 @@ public class BulletPool : MonoBehaviour
             {
                 ReturnNormalBullet(bullet);
             });
+
             return bullet;
         }
     }

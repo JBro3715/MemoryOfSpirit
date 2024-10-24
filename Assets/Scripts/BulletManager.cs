@@ -4,13 +4,10 @@ using UnityEngine;
 
 public class BulletManager : MonoBehaviour
 {
-    public GameObject background;
-
     private BulletPool bulletPool;
 
     private StraightBullet straightBullet;
     private StraightFenceBullet straightFenceBullet;
-
 
     private const int STRAIGHT_BULLET_COUNT = 20;
     private const int STRAIGHT_BULLET_TERM = 10;
@@ -18,7 +15,7 @@ public class BulletManager : MonoBehaviour
 
     private void Start()
     {
-        var bounds = background.GetComponent<Collider2D>().bounds;
+        var bounds = GameManager.Instance.bounds;
         bulletPool = GetComponent<BulletPool>();
 
         straightBullet = new StraightBullet(bulletPool, bounds);
@@ -27,7 +24,7 @@ public class BulletManager : MonoBehaviour
         StartCoroutine(nameof(BulletFire));
     }
 
-    IEnumerator BulletFire()
+    private IEnumerator BulletFire()
     {
         int count = 10;
         while(true)
