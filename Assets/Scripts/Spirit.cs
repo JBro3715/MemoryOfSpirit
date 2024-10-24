@@ -2,20 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Spirit : MonoBehaviour
 {
     [SerializeField] private Image hpBar;
+    [SerializeField] private TextMeshProUGUI hpText;
 
     readonly private Color[] basicColors = {Color.grey, Color.yellow, Color.magenta, Color.cyan, Color.red, Color.blue, Color.green };
     private Vector2 direction;
     private Vector3 offset;
     private float moveSpeed = 3f;
-    private int HP = 100;
-    private int maxHP;
+    private int HP = DEFAULT_HP;
+    private int maxHP = DEFAULT_HP;
 
-    // Start is called before the first frame update
-    void Start()
+    private const int DEFAULT_HP = 100;
+    private const int LIMIT_HP = 250;
+
+
+    private void Start()
     {
         if(hpBar == null)
         {
@@ -25,14 +30,14 @@ public class Spirit : MonoBehaviour
         var randomIndex = Random.Range(0, basicColors.Length);
         var spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.color = basicColors[randomIndex];
-        maxHP = HP;
 
         offset.x = 0.05f;
         offset.y = 0.5f;
+
+        UpdateHP(0);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         direction.x = Input.GetAxisRaw("Horizontal");
         direction.y = Input.GetAxisRaw("Vertical");
@@ -48,27 +53,51 @@ public class Spirit : MonoBehaviour
         hpBar.transform.position = screenPosition;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void UpdateHP(int hp)
     {
-        if (collision.transform.CompareTag("Bullet"))
+        HP += hp;
+
+        if(HP > maxHP)
         {
-            var bullet = collision.gameObject.GetComponent<Bullet>();
-
-            HP -= bullet.damage;
-            hpBar.fillAmount = HP / (float)maxHP;
-            bullet.DestroyBullet();
-
-            if (HP <= 0)
-            {
-                Debug.Log("GameOver!");
-            }
+            maxHP = HP;
+        }
+        
+        if(HP >= LIMIT_HP)
+        {
+            HP = LIMIT_HP;
+            maxHP = LIMIT_HP;
         }
 
-        if (collision.transform.CompareTag("Wall"))
+        hpBar.fillAmount = HP / (float)maxHP;
+        hpText.text = $"{HP} / {maxHP}";
+
+        if(HP <= 0)
         {
-            HP -= 100;
-            hpBar.fillAmount = 0;
-            Debug.Log("GameOver!");
+            GameManager.Instance.GameOver();
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag(GameManager.Tag.Bullet.ToString()))
+        {
+            var bullet = collision.GetComponent<Bullet>();
+
+            UpdateHP(-bullet.damage);
+            bullet.DestroyBullet();
+        }
+
+        if (collision.CompareTag(GameManager.Tag.Wall.ToString()))
+        {
+            UpdateHP(-LIMIT_HP);
+        }
+
+        if(collision.CompareTag(GameManager.Tag.HealthPotion.ToString()))
+        {
+            var healthPotion = collision.GetComponent<HealthPotion>();
+
+            UpdateHP(healthPotion.heal);
+            healthPotion.DestroyPotion();
         }
     }
 }
