@@ -99,5 +99,13 @@ public class Spirit : MonoBehaviour
             UpdateHP(healthPotion.heal);
             healthPotion.DestroyPotion();
         }
+
+        if(collision.CompareTag(GameManager.Tag.Wisp.ToString()))
+        {
+            var wisp = collision.GetComponent<Wisp>();
+
+            GameManager.Instance.AddScore(wisp.point);
+            wisp.DestroyWisp();
+        }
     }
 }
