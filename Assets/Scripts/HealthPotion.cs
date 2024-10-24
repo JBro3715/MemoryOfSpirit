@@ -7,6 +7,7 @@ public class HealthPotion : MonoBehaviour
 
     [HideInInspector] public int heal = 50;
 
+
     private float lifeTime = DEFAULT_LIFE_TIME;
 
     private const float DEFAULT_LIFE_TIME = 15f;
@@ -24,6 +25,12 @@ public class HealthPotion : MonoBehaviour
 
     public void DestroyPotion()
     {
+        ResetPotion();
         returnHealthPotionCommand.Execute();
+    }
+
+    private void ResetPotion()
+    {
+        lifeTime = DEFAULT_LIFE_TIME;
     }
 }
