@@ -6,23 +6,30 @@ using TMPro;
 
 public class GameManager : Singleton<GameManager>
 {
+    public enum Tag { Player, Wall, Bullet, DestroyArea, HealthPotion, Wisp };
+    public enum LEVEL { Normal = 1, Hard = 2 };
+
+    [HideInInspector] public Bounds allBounds;
+    [HideInInspector] public Bounds playBounds;
+    [HideInInspector] public LEVEL level;
+
     [SerializeField] private GameObject background;
     [SerializeField] private GameObject playground;
 
-    [SerializeField] private TextMeshProUGUI timeText;
-    [SerializeField] private TextMeshProUGUI scoreText;
-    [SerializeField] private TextMeshProUGUI playerCountText;
-
-    public enum Tag { Player, Wall, Bullet, DestroyArea, HealthPotion, Wisp };
-    [HideInInspector] public Bounds allBounds;
-    [HideInInspector] public Bounds playBounds;
-
+    private Dictionary<LEVEL, Action<int>> scoreMap;
     private WaitForSeconds timerSeconds;
     private DateTime endTime;
     private int score;
     private int playerCount;
 
+    private int normalScore;
+    private int hardScore;
+    private int timeBonus;
+
     private const int PLAY_TIME = 2;
+    private const int LEVEL_CHANGE_TIME = 1;
+    private const int POINT_TIME = 10;
+    private const int TIME_BONUS = 30;
         
     protected override void Awake()
     {
@@ -30,31 +37,62 @@ public class GameManager : Singleton<GameManager>
 
         allBounds = background.GetComponent<Collider2D>().bounds;
         playBounds = playground.GetComponent<Collider2D>().bounds;
+        level = LEVEL.Normal;
+
+        scoreMap = new Dictionary<LEVEL, Action<int>>
+        {
+            { LEVEL.Normal, score => normalScore += score },
+            { LEVEL.Hard, score => hardScore += score }
+        };
 
         timerSeconds = new(1f);
         score = 0;
         playerCount = 0;
+
+        normalScore = 0;
+        hardScore = 0;
+        timeBonus = 0;
 
         AddScore(0);
         AddPlayer();
         StartCountdown(PLAY_TIME);
     }
 
-    public void AddScore(int score)
+    #region Public Field
+    public void AddScore(int score, bool isTimeBonus = false)
     {
-        this.score += score;
-        scoreText.text = $"{this.score}";
+        var levelScore = score * (int)level;
+        this.score += levelScore;
+        UIManager.Instance.ApplyScoreUI(this.score);
+
+        if(scoreMap.ContainsKey(level) && !isTimeBonus)
+        {
+            scoreMap[level](levelScore);
+        }
     }
 
     public void AddPlayer()
     {
         playerCount++;
-        playerCountText.text = playerCount.ToString();
+        UIManager.Instance.ApplyPlayerCountUI(playerCount);
     }
 
     public void GameOver()
     {
         Debug.Log("Game Over!!");
+        StopAllCoroutines();
+
+        UIManager.Instance.FinalScoreUI(normalScore, hardScore, timeBonus, false);
+    }
+    #endregion
+
+    #region Private Field
+    private void Clear()
+    {
+        Debug.Log("Clear!!");
+        StopAllCoroutines();
+
+        UIManager.Instance.FinalScoreUI(normalScore, hardScore, timeBonus, true);
     }
 
     private void StartCountdown(int minutes)
@@ -68,16 +106,32 @@ public class GameManager : Singleton<GameManager>
         while(true)
         {
             TimeSpan playTime = endTime - DateTime.Now;
-
+            
+            // 남은 시간이 0초 이하인 경우
             if(playTime <= TimeSpan.Zero)
             {
                 playTime = TimeSpan.Zero;
-                GameOver();
+                Clear();
+            }
+            
+            // 남은 시간을 체크해서 Hard 난이도로 변경
+            if(playTime <= TimeSpan.FromMinutes(LEVEL_CHANGE_TIME) && level != LEVEL.Hard)
+            {
+                level = LEVEL.Hard;
+                BulletManager.Instance.ChangeHardMode();
             }
 
-            timeText.text = string.Format("{0:00}:{1:00}", playTime.Minutes, playTime.Seconds);
+            // 특정 플레이 타임마다 포인트 획득
+            if(playTime.Seconds % POINT_TIME == 0)
+            {
+                AddScore(TIME_BONUS, true);
+                timeBonus += TIME_BONUS * (int)level;
+            }
+
+            UIManager.Instance.ApplyTimeUI(playTime);
 
             yield return timerSeconds;
         }
     }
+    #endregion
 }
