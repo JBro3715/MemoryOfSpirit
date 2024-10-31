@@ -28,9 +28,9 @@ public abstract class BulletPattern
         var bullet = bulletPool.GetNormalBullet();
 
         bullet.transform.position = startPosition;
-        bullet.speed = bulletSpeed;
+        bullet.speed = bulletSpeed * (int)GameManager.Instance.level;
         bullet.direction = direction;
-        bullet.damage = damage;
+        bullet.damage = damage * (int)GameManager.Instance.level;
 
         return bullet;
     }
