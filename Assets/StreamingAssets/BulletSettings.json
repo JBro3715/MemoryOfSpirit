@@ -1,0 +1,12 @@
+{
+  "normal": {
+    "straightBulletCount": 20,
+    "straightBulletTerm": 10,
+    "straightFenceBulletTerm": 25
+  },
+  "hard": {
+    "straightBulletCount": 30,
+    "straightBulletTerm": 8,
+    "straightFenceBulletTerm": 15
+  }
+}
