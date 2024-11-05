@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UniRx;
 
 public class ItemManager : MonoBehaviour
 {
@@ -15,10 +16,18 @@ public class ItemManager : MonoBehaviour
     private const int HEAL_POTION_SPAWN_COUNT = 2;
 
     private const int WISP_SPAWN_TIME = 10;
-    private const int WISP_SPAWN_COUNT = 1;
+    private const int WISP_SPAWN_COUNT = 5;
 
     private void Start()
     {
+        GameManager.Instance.isPlayed.Subscribe(isPlayed =>
+        {
+            if(!isPlayed)
+            {
+                StopAllCoroutines();
+            }
+        });
+
         itemPool = GetComponent<ItemPool>();
         bounds = GameManager.Instance.playBounds;
 
