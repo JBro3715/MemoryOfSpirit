@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections;
 using UnityEngine;
+using UniRx;
 
 public class BulletManager : Singleton<BulletManager>
 {
@@ -20,11 +21,14 @@ public class BulletManager : Singleton<BulletManager>
         public DifficultySettings hard;
     }
 
+    public GameObject meteor;
+
     private BulletSettings bulletSettings;
     private BulletPool bulletPool;
 
     private StraightBullet straightBullet;
     private StraightFenceBullet straightFenceBullet;
+    private SpreadBullet spreadBullet;
 
     private readonly WaitForSeconds fireWaitSeconds = new(1f);
 
@@ -35,11 +39,27 @@ public class BulletManager : Singleton<BulletManager>
 
     private void Start()
     {
-        var bounds = GameManager.Instance.allBounds;
+        GameManager.Instance.level.Subscribe(level =>
+        {
+            if (level == GameManager.LEVEL.Hard)
+            {
+                ChangeHardMode();
+            }
+        });
+
+        GameManager.Instance.isPlayed.Subscribe(isPlayed =>
+        {
+            if (!isPlayed)
+            {
+                StopAllCoroutines();
+            }
+        });
+
         bulletPool = GetComponent<BulletPool>();
 
-        straightBullet = new StraightBullet(bulletPool, bounds);
-        straightFenceBullet = new StraightFenceBullet(bulletPool, bounds);
+        straightBullet = new StraightBullet(bulletPool, GameManager.Instance.allBounds);
+        straightFenceBullet = new StraightFenceBullet(bulletPool, GameManager.Instance.allBounds);
+        spreadBullet = new SpreadBullet(bulletPool, GameManager.Instance.playBounds);
 
         settingFilePath = Path.Combine(Application.streamingAssetsPath, "BulletSettings.json");
         LoadSettings();
@@ -84,10 +104,12 @@ public class BulletManager : Singleton<BulletManager>
         }
     }
 
-    public void ChangeHardMode()
+    private void ChangeHardMode()
     {
         straightBulletCount = bulletSettings.hard.straightBulletCount;
         straightBulletTerm = bulletSettings.hard.straightBulletTerm;
         straightFenceBulletTerm = bulletSettings.hard.straightFenceBulletTerm;
+
+        spreadBullet.Fire();
     }
 }
