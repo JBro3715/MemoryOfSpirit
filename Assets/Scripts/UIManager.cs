@@ -1,15 +1,15 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UniRx;
 
 public class UIManager : Singleton<UIManager>
 {
     [SerializeField] private TextMeshProUGUI timeText;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI playerCountText;
+    [SerializeField] private TextMeshProUGUI levelText;
 
     [SerializeField] private GameObject finalInfoPanel;
     [SerializeField] private Image finalImage;
@@ -21,6 +21,26 @@ public class UIManager : Singleton<UIManager>
 
     [SerializeField] private Sprite gameoverSprite;
     [SerializeField] private Sprite clearSprite;
+
+    private const string NORMAL_HEX_COLOR = "#53FFFA";
+    private const string HARD_HEX_COLOR = "#FF1317";
+
+    private void Start()
+    {
+        levelText.text = $"NORMAL";
+        ColorUtility.TryParseHtmlString(NORMAL_HEX_COLOR, out Color color);
+        levelText.color = color;
+
+        GameManager.Instance.level.Subscribe(level =>
+        {
+            if(level == GameManager.LEVEL.Hard)
+            {
+                levelText.text = $"HARD";
+                ColorUtility.TryParseHtmlString(HARD_HEX_COLOR, out Color color);
+                levelText.color = color;
+            }
+        });
+    }
 
     public void ApplyTimeUI(TimeSpan value)
     {
