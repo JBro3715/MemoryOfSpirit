@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UniRx;
 
 public class Spirit : MonoBehaviour
 {
@@ -27,6 +26,14 @@ public class Spirit : MonoBehaviour
             Debug.LogException(new System.Exception("HP Bar 이미지가 연결되어 있지 않습니다."));
         }
 
+        GameManager.Instance.level.Subscribe(level =>
+        {
+            if(level == GameManager.LEVEL.Hard)
+            {
+                moveSpeed *= 3;
+            }
+        });
+
         var randomIndex = Random.Range(0, basicColors.Length);
         var spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.color = basicColors[randomIndex];
@@ -39,12 +46,15 @@ public class Spirit : MonoBehaviour
 
     private void Update()
     {
-        direction.x = Input.GetAxisRaw("Horizontal");
-        direction.y = Input.GetAxisRaw("Vertical");
+        if(GameManager.Instance.isPlayed.Value)
+        {
+            direction.x = Input.GetAxisRaw("Horizontal");
+            direction.y = Input.GetAxisRaw("Vertical");
 
-        Vector2 move = moveSpeed * Time.deltaTime * direction;
+            Vector2 move = moveSpeed * Time.deltaTime * direction;
 
-        transform.Translate(move);
+            transform.Translate(move);
+        }
     }
 
     private void LateUpdate()
