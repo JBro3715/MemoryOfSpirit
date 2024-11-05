@@ -2,16 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
+using UniRx;
 
 public class GameManager : Singleton<GameManager>
 {
     public enum Tag { Player, Wall, Bullet, DestroyArea, HealthPotion, Wisp };
     public enum LEVEL { Normal = 1, Hard = 2 };
 
+    public ReactiveProperty<LEVEL> level;
+    public ReactiveProperty<bool> isPlayed;
+
     [HideInInspector] public Bounds allBounds;
     [HideInInspector] public Bounds playBounds;
-    [HideInInspector] public LEVEL level;
 
     [SerializeField] private GameObject background;
     [SerializeField] private GameObject playground;
@@ -37,7 +39,8 @@ public class GameManager : Singleton<GameManager>
 
         allBounds = background.GetComponent<Collider2D>().bounds;
         playBounds = playground.GetComponent<Collider2D>().bounds;
-        level = LEVEL.Normal;
+        level.Value = LEVEL.Normal;
+        isPlayed.Value = true;
 
         scoreMap = new Dictionary<LEVEL, Action<int>>
         {
@@ -61,13 +64,13 @@ public class GameManager : Singleton<GameManager>
     #region Public Field
     public void AddScore(int score, bool isTimeBonus = false)
     {
-        var levelScore = score * (int)level;
+        var levelScore = score * (int)level.Value;
         this.score += levelScore;
         UIManager.Instance.ApplyScoreUI(this.score);
 
-        if(scoreMap.ContainsKey(level) && !isTimeBonus)
+        if(scoreMap.ContainsKey(level.Value) && !isTimeBonus)
         {
-            scoreMap[level](levelScore);
+            scoreMap[level.Value](levelScore);
         }
     }
 
@@ -80,6 +83,7 @@ public class GameManager : Singleton<GameManager>
     public void GameOver()
     {
         Debug.Log("Game Over!!");
+        isPlayed.Value = false;
         StopAllCoroutines();
 
         UIManager.Instance.FinalScoreUI(normalScore, hardScore, timeBonus, false);
@@ -90,6 +94,7 @@ public class GameManager : Singleton<GameManager>
     private void Clear()
     {
         Debug.Log("Clear!!");
+        isPlayed.Value = false;
         StopAllCoroutines();
 
         UIManager.Instance.FinalScoreUI(normalScore, hardScore, timeBonus, true);
@@ -115,17 +120,16 @@ public class GameManager : Singleton<GameManager>
             }
             
             // 남은 시간을 체크해서 Hard 난이도로 변경
-            if(playTime <= TimeSpan.FromMinutes(LEVEL_CHANGE_TIME) && level != LEVEL.Hard)
+            if(playTime <= TimeSpan.FromMinutes(LEVEL_CHANGE_TIME) && level.Value != LEVEL.Hard)
             {
-                level = LEVEL.Hard;
-                BulletManager.Instance.ChangeHardMode();
+                level.Value = LEVEL.Hard;
             }
 
             // 특정 플레이 타임마다 포인트 획득
             if(playTime.Seconds % POINT_TIME == 0)
             {
                 AddScore(TIME_BONUS, true);
-                timeBonus += TIME_BONUS * (int)level;
+                timeBonus += TIME_BONUS * (int)level.Value;
             }
 
             UIManager.Instance.ApplyTimeUI(playTime);
