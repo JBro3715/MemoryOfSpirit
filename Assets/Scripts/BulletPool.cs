@@ -49,7 +49,14 @@ public class BulletPool : MonoBehaviour
         }
         else
         {
-            return Instantiate(specialBulletPrefab, bulletParent).GetComponent<Bullet>();
+            var bullet = Instantiate(specialBulletPrefab, bulletParent).GetComponent<Bullet>();
+
+            bullet.returnBulletCommand.Subscribe(_ =>
+            {
+                ReturnSpecialBullet(bullet);
+            });
+
+            return bullet;
         }
     }
 
