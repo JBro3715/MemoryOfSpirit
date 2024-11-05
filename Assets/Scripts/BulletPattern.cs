@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Threading.Tasks;
 
 public abstract class BulletPattern
 {
@@ -17,20 +18,34 @@ public abstract class BulletPattern
 
         startPosition = Vector2.zero;
         direction = Vector2.zero;
-        bulletSpeed = 1f;
+        bulletSpeed = Random.Range(1f, 3f);
         damage = 40;
     }
 
     public abstract void Fire();
 
-    protected Bullet SetBullet()
+    protected Bullet SetNormalBullet()
     {
         var bullet = bulletPool.GetNormalBullet();
 
         bullet.transform.position = startPosition;
-        bullet.speed = bulletSpeed * (int)GameManager.Instance.level;
+        bullet.speed = bulletSpeed * (int)GameManager.Instance.level.Value;
         bullet.direction = direction;
-        bullet.damage = damage * (int)GameManager.Instance.level;
+        bullet.damage = damage * (int)GameManager.Instance.level.Value;
+        bullet.MovingBullet();
+
+        return bullet;
+    }
+
+    protected Bullet SetSpecialBullet()
+    {
+        var bullet = bulletPool.GetSpecialBullet();
+
+        bullet.transform.position = startPosition;
+        bullet.speed = bulletSpeed * (int)GameManager.Instance.level.Value;
+        bullet.direction = direction;
+        bullet.damage = damage * (int)GameManager.Instance.level.Value;
+        bullet.MovingBullet();
 
         return bullet;
     }
@@ -47,7 +62,7 @@ public class StraightBullet : BulletPattern
         SetStartPosition();
         SetDirection();
 
-        SetBullet();
+        SetNormalBullet();
     }
 
     private void SetStartPosition()
@@ -131,7 +146,7 @@ public class StraightFenceBullet : BulletPattern
         {
             startPosition.x = i;
 
-            SetBullet();
+            SetNormalBullet();
         }
     }
 
@@ -146,7 +161,7 @@ public class StraightFenceBullet : BulletPattern
         {
             startPosition.x = i;
 
-            SetBullet();
+            SetNormalBullet();
         }
     }
 
@@ -161,7 +176,7 @@ public class StraightFenceBullet : BulletPattern
         {
             startPosition.y = i;
 
-            SetBullet();
+            SetNormalBullet();
         }
     }
 
@@ -176,20 +191,62 @@ public class StraightFenceBullet : BulletPattern
         {
             startPosition.y = i;
 
-            SetBullet();
+            SetNormalBullet();
         }
     }
 }
 
 public class SpreadBullet : BulletPattern
 {
+    private GameObject meteor;
+    private const int SHOOT_COUNT = 5;
+    private Vector2 velocity = Vector2.zero;
+
     public SpreadBullet(BulletPool bulletPool, Bounds bounds) : base(bulletPool, bounds)
     {
+        meteor = BulletManager.Instance.meteor;
+        meteor.transform.position = bulletBounds.min;
+        startPosition = Random.insideUnitCircle * bulletBounds.extents.y * 0.5f;
+        bulletSpeed = Random.Range(2f, 3f);
     }
 
-    public override void Fire()
+    public async override void Fire()
     {
-        Debug.Log("È®»ê Åº¸·");
+        meteor.SetActive(true);
+        while(Vector2.Distance(meteor.transform.position, startPosition) > 0.05f)
+        {
+            await Task.Delay(10);
+            meteor.transform.position = Vector2.SmoothDamp(meteor.transform.position, startPosition, ref velocity, 0.15f);
+        }
+        meteor.transform.position = startPosition;
+
+        await SetBullets(SHOOT_COUNT);
+        meteor.SetActive(false);
     }
 
+    private async Task SetBullets(int count)
+    {
+        count--;
+        int bulletCount = 24;
+
+        float angleStep = 360f / bulletCount;
+        float angle = 0f;
+
+        for(int i = 0; i < bulletCount; i++)
+        {
+            direction.x = Mathf.Cos(angle * Mathf.Deg2Rad);
+            direction.y = Mathf.Sin(angle * Mathf.Deg2Rad);
+            direction.Normalize();
+
+            SetSpecialBullet();
+            
+            angle += angleStep;
+        }
+
+        if(count > 0)
+        {
+            await Task.Delay(500);
+            await SetBullets(count);
+        }
+    }
 }
