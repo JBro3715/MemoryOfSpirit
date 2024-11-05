@@ -9,9 +9,17 @@ public class Bullet : MonoBehaviour
     
     public ReactiveCommand returnBulletCommand = new ();
 
-    void Update()
+    private Rigidbody2D rigid;
+
+    private void Awake()
     {
-        transform.Translate(speed * Time.deltaTime * direction);
+        rigid = GetComponent<Rigidbody2D>();
+    }
+
+    public void MovingBullet()
+    {
+        rigid.velocity = direction * speed;
+        transform.right = direction;
     }
 
     public void DestroyBullet()
